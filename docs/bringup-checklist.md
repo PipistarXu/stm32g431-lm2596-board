@@ -1,66 +1,49 @@
-# Hardware Notes (Consolidated)
+# Bring-Up Checklist (STM32G431 + LM2596)
 
-## 1. MCU Package and Soldering
-- Target MCU package: **UFQFPN48** (STM32G431).
-- Package characteristics:
-  - Pads under body edge (no gull-wing leads)
-  - Exposed thermal pad in center
-- Assembly advice:
-  - Prefer SMT assembly service if available.
-  - If hand-soldering: use hot air (typically ~330-350°C, medium-low airflow), good flux, and solder paste.
-  - For exposed pad (EP): small paste dots (not full flood) to avoid floating/shorts.
-- Post-solder must-check:
-  - Measure resistance between 3V3 and GND before first power-on.
+## A. Pre-Solder Checklist
+- [ ] All parts received and matched with BOM values
+- [ ] Verify package compatibility (especially inductor and electrolytics)
+- [ ] Confirm orientation marks for:
+  - [ ] STM32 pin-1
+  - [ ] 1N5822 stripe side
+  - [ ] Electrolytic capacitor polarity
+- [ ] Flux, paste, tweezers, hot-air station ready
 
-## 2. Buck Stage (LM2596)
-### 2.1 Schottky diode (1N5822)
-- Polarity:
-  - Stripe side = **Cathode (K)**
-  - Non-stripe side = **Anode (A)**
-- Required connection:
-  - **K -> SW node**
-  - **A -> GND**
-- Critical rule:
-  - If silkscreen conflicts with electrical net, trust schematic/netlist and multimeter continuity.
+## B. Post-Solder Visual Inspection
+- [ ] No solder bridges on MCU pins
+- [ ] Exposed pad not over-pasted (no floating package)
+- [ ] Diode direction correct (K->SW, A->GND)
+- [ ] Electrolytic caps polarity correct
+- [ ] Inductor seated and aligned
+- [ ] No missing passives
 
-### 2.2 Inductor
-- Selected model: **CDRH127/LDNP-330MC**
-- Key parameters:
-  - 33uH nominal
-  - 12x12mm body
-  - DCR around 53.3mΩ (max, per earlier reference)
-  - Rated current around 3.9A class
-- Mechanical caveat:
-  - Height approx 8mm (check enclosure clearance).
-- Layout caveat:
-  - Confirm datasheet-recommended land pattern vs PCB footprint.
+## C. Multimeter Checks (Power OFF)
+- [ ] VIN to GND resistance (not near-short)
+- [ ] 5V/3V3 to GND resistance (not near-short)
+- [ ] Continuity check D2 pad-to-net:
+  - [ ] Stripe pad continuity to SW node
+  - [ ] Other pad continuity to GND
 
-## 3. Capacitors
-### 3.1 Small decoupling caps
-- 0603 X7R preferred.
-- Typical values used:
-  - 100nF (multiple)
-  - 10nF
-  - 0.47uF
+## D. First Power-On (Bench Supply)
+- [ ] Set current limit to 0.1A
+- [ ] Start with intended VIN (or lower safe VIN if design allows)
+- [ ] Confirm current does not instantly clamp hard
+- [ ] Measure LM2596 output voltage
+- [ ] If normal, raise current limit gradually to 0.2A / 0.3A
+- [ ] Check temperature of LM2596, diode, inductor
 
-### 3.2 Bulk electrolytic caps
-- Values observed in design:
-  - 47uF
-  - 100uF
-  - 220uF
-- Recommendations:
-  - Low-ESR parts preferred for LM2596 stability/ripple performance.
-  - Use sufficient voltage rating (commonly 16V/25V; input side may need 25V/35V depending VIN).
-  - 220uF at 6.3x5.4 package may have limited options; enlarge package if needed.
+## E. MCU Bring-Up
+- [ ] Confirm 3V3 stable
+- [ ] SWD connection recognized
+- [ ] Flash minimal test firmware (blinky/UART log)
+- [ ] Verify reset/boot behavior
 
-## 4. Resistor Note (R4)
-- Footprint appears to be **0402 (1005 Metric)**.
-- Current net label suggests VBAT-to-PB4 path; verify design intent in schematic.
-- Final resistance value still TBD before purchasing final BOM.
+## F. If Abnormal
+- [ ] Immediate power-off
+- [ ] Re-check shorts and polarity
+- [ ] Inspect suspicious joints with magnification
+- [ ] Reflow MCU/diode region if needed
 
-## 5. First Power-On Safety
-- Use bench supply current limit: **0.1A~0.2A** for initial test.
-- Bring-up sequence:
   1. Continuity/short checks
   2. Low-current power-on
   3. Verify output rails
